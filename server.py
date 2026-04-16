@@ -9,54 +9,73 @@ from moviebox_api.v3.constants import CustomResolutionType
 
 app = FastAPI()
 
-# -----------------------
-# TMDB CONFIG
-# -----------------------
 TMDB_API_KEY = "e1d304dda8b47424245c3c62fe9baea2"
 TMDB_URL = "https://api.themoviedb.org/3/search/movie"
 
 
 # -----------------------
-# HEALTH CHECK
+# TMDB SEARCH
 # -----------------------
-@app.get("/")
-def home():
-    return {"status": "MovieBox + TMDB API running"}
+def tmdb_search(query):
+    res = requests.get(TMDB_URL, params={
+        "api_key": TMDB_API_KEY,
+        "query": query
+    })
+    data = res.json()
+    return data.get("results", [])
 
 
 # -----------------------
-# TMDB SEARCH (NEW)
+# MOVIEBOX SEARCH (IMPORTANT PART)
 # -----------------------
-@app.get("/search")
-def search_movie(query: str = None):
+async def moviebox_search(title):
+    async with MovieBoxHttpClient() as client:
+        # using internal search method from library if available
+        from moviebox_api.v3.search import search
+
+        results = await search(client, title)
+
+        for item in results:
+            return {
+                "id": getattr(item, "id", None),
+                "title": getattr(item, "title", title)
+            }
+
+    return None
+
+
+# -----------------------
+# RESOLVE (NEW MAPPING LAYER)
+# -----------------------
+@app.get("/resolve")
+async def resolve(query: str = None):
     if not query:
         raise HTTPException(status_code=400, detail="Missing query")
 
     try:
-        res = requests.get(TMDB_URL, params={
-            "api_key": TMDB_API_KEY,
-            "query": query
-        })
+        # 1. TMDB search
+        tmdb_results = tmdb_search(query)
 
-        data = res.json()
+        if not tmdb_results:
+            return {"error": "No TMDB results"}
 
-        results = []
+        best = tmdb_results[0]
+        title = best.get("title")
 
-        for m in data.get("results", [])[:10]:
-            results.append({
-                "title": m.get("title"),
-                "id": m.get("id"),
-                "release_date": m.get("release_date")
-            })
+        # 2. MovieBox search using TITLE (NOT TMDB ID)
+        mb = await moviebox_search(title)
 
-        return {"results": results}
+        if not mb:
+            return {"error": "No MovieBox match"}
+
+        return mb
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # -----------------------
-# MOVIEBOX LINKS
+# LINKS
 # -----------------------
 async def get_links(subject_id):
     async with MovieBoxHttpClient() as client:
@@ -72,7 +91,7 @@ async def get_links(subject_id):
                     "quality": res.name,
                     "url": str(media.url)
                 })
-            except Exception:
+            except:
                 continue
 
         return links
@@ -83,14 +102,19 @@ async def links(id: str = None):
     if not id:
         raise HTTPException(status_code=400, detail="Missing id")
 
-    try:
-        return {"data": await get_links(id)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"data": await get_links(id)}
 
 
 # -----------------------
-# CLOUD RUN START
+# HEALTH
+# -----------------------
+@app.get("/")
+def home():
+    return {"status": "MovieBox API + TMDB mapping running"}
+
+
+# -----------------------
+# STARTUP
 # -----------------------
 if __name__ == "__main__":
     import uvicorn
