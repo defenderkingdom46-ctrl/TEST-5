@@ -1,8 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import os
 
-from moviebox_api.v3.search import search  # 👈 IMPORTANT ADD
-
 from moviebox_api.v3.http_client import MovieBoxHttpClient
 from moviebox_api.v3.core import DownloadableFilesDetail
 from moviebox_api.v3.download import resolve_media_file_to_be_downloaded
@@ -11,38 +9,17 @@ from moviebox_api.v3.constants import CustomResolutionType
 app = FastAPI()
 
 
-# ----------------------------
-# SEARCH ENDPOINT (NEW)
-# ----------------------------
-@app.get("/search")
-async def search_movie(query: str = None):
-    if not query:
-        raise HTTPException(status_code=400, detail="Missing query")
-
-    try:
-        async with MovieBoxHttpClient() as client:
-            results = await search(client, query)
-
-        movies = []
-
-        for item in results[:10]:  # limit results
-            try:
-                movies.append({
-                    "title": getattr(item, "title", "Unknown"),
-                    "id": getattr(item, "id", None)
-                })
-            except:
-                continue
-
-        return {"results": movies}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# -----------------------
+# HEALTH CHECK
+# -----------------------
+@app.get("/")
+def home():
+    return {"status": "MovieBox API running"}
 
 
-# ----------------------------
-# LINKS ENDPOINT (your old one)
-# ----------------------------
+# -----------------------
+# LINKS ENDPOINT
+# -----------------------
 async def get_links(subject_id):
     async with MovieBoxHttpClient() as client:
         details = DownloadableFilesDetail(client)
@@ -57,7 +34,7 @@ async def get_links(subject_id):
                     "quality": res.name,
                     "url": str(media.url)
                 })
-            except:
+            except Exception:
                 continue
 
         return links
@@ -68,21 +45,15 @@ async def links(id: str = None):
     if not id:
         raise HTTPException(status_code=400, detail="Missing id")
 
-    result = await get_links(id)
-    return {"data": result}
+    try:
+        return {"data": await get_links(id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-# ----------------------------
-# HEALTH CHECK
-# ----------------------------
-@app.get("/")
-def home():
-    return {"status": "MovieBox API running"}
-
-
-# ----------------------------
+# -----------------------
 # CLOUD RUN STARTUP
-# ----------------------------
+# -----------------------
 if __name__ == "__main__":
     import uvicorn
 
