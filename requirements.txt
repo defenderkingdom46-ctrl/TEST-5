@@ -1,0 +1,3 @@
+fastapi
+uvicorn
+git+https://github.com/Simatwa/moviebox-api.git
