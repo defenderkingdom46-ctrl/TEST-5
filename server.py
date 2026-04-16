@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import os
+import requests
 
 from moviebox_api.v3.http_client import MovieBoxHttpClient
 from moviebox_api.v3.core import DownloadableFilesDetail
@@ -8,17 +9,54 @@ from moviebox_api.v3.constants import CustomResolutionType
 
 app = FastAPI()
 
+# -----------------------
+# TMDB CONFIG
+# -----------------------
+TMDB_API_KEY = "e1d304dda8b47424245c3c62fe9baea2"
+TMDB_URL = "https://api.themoviedb.org/3/search/movie"
+
 
 # -----------------------
 # HEALTH CHECK
 # -----------------------
 @app.get("/")
 def home():
-    return {"status": "MovieBox API running"}
+    return {"status": "MovieBox + TMDB API running"}
 
 
 # -----------------------
-# LINKS ENDPOINT
+# TMDB SEARCH (NEW)
+# -----------------------
+@app.get("/search")
+def search_movie(query: str = None):
+    if not query:
+        raise HTTPException(status_code=400, detail="Missing query")
+
+    try:
+        res = requests.get(TMDB_URL, params={
+            "api_key": TMDB_API_KEY,
+            "query": query
+        })
+
+        data = res.json()
+
+        results = []
+
+        for m in data.get("results", [])[:10]:
+            results.append({
+                "title": m.get("title"),
+                "id": m.get("id"),
+                "release_date": m.get("release_date")
+            })
+
+        return {"results": results}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# -----------------------
+# MOVIEBOX LINKS
 # -----------------------
 async def get_links(subject_id):
     async with MovieBoxHttpClient() as client:
@@ -52,7 +90,7 @@ async def links(id: str = None):
 
 
 # -----------------------
-# CLOUD RUN STARTUP
+# CLOUD RUN START
 # -----------------------
 if __name__ == "__main__":
     import uvicorn
