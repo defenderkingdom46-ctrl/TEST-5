@@ -1,8 +1,8 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# ✅ INSTALL GIT (THIS WAS MISSING)
+# install git for GitHub dependency
 RUN apt-get update && apt-get install -y git
 
 COPY requirements.txt .
