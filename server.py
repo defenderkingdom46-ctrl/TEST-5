@@ -14,41 +14,56 @@ TMDB_URL = "https://api.themoviedb.org/3/search/movie"
 
 
 # -----------------------
-# TMDB SEARCH
+# HEALTH CHECK
+# -----------------------
+@app.get("/")
+def home():
+    return {"status": "MovieBox API ready"}
+
+
+# -----------------------
+# TMDB SEARCH (USER INPUT)
 # -----------------------
 def tmdb_search(query):
     res = requests.get(TMDB_URL, params={
         "api_key": TMDB_API_KEY,
         "query": query
     })
-    data = res.json()
-    return data.get("results", [])
+    return res.json().get("results", [])
 
 
 # -----------------------
-# MOVIEBOX SEARCH (IMPORTANT PART)
+# MOVIEBOX AUTO FIND (NO SEARCH MODULE)
 # -----------------------
-async def moviebox_search(title):
+async def find_moviebox_id(title):
+    """
+    IMPORTANT:
+    We avoid broken moviebox_api.search module.
+    Instead we rely on internal content scan.
+    """
+
     async with MovieBoxHttpClient() as client:
-        # using internal search method from library if available
-        from moviebox_api.v3.search import search
+        # fallback approach: try content lookup via detail fetch
+        details = DownloadableFilesDetail(client)
 
-        results = await search(client, title)
+        # brute-force safe approach using internal dataset
+        data = await details.get_content_model(title)
 
-        for item in results:
+        # try to extract id safely
+        if hasattr(data, "id"):
             return {
-                "id": getattr(item, "id", None),
-                "title": getattr(item, "title", title)
+                "id": data.id,
+                "title": getattr(data, "title", title)
             }
 
-    return None
+        return None
 
 
 # -----------------------
-# RESOLVE (NEW MAPPING LAYER)
+# MAIN SEARCH → LINKS FLOW
 # -----------------------
-@app.get("/resolve")
-async def resolve(query: str = None):
+@app.get("/search")
+async def search(query: str = None):
     if not query:
         raise HTTPException(status_code=400, detail="Missing query")
 
@@ -57,25 +72,32 @@ async def resolve(query: str = None):
         tmdb_results = tmdb_search(query)
 
         if not tmdb_results:
-            return {"error": "No TMDB results"}
+            return {"error": "No results found"}
 
         best = tmdb_results[0]
         title = best.get("title")
 
-        # 2. MovieBox search using TITLE (NOT TMDB ID)
-        mb = await moviebox_search(title)
+        # 2. MovieBox resolve (NO BROKEN SEARCH MODULE)
+        mb = await find_moviebox_id(title)
 
         if not mb:
-            return {"error": "No MovieBox match"}
+            return {"error": "MovieBox match not found"}
 
-        return mb
+        # 3. directly fetch links
+        links = await get_links(mb["id"])
+
+        return {
+            "title": mb["title"],
+            "id": mb["id"],
+            "links": links
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # -----------------------
-# LINKS
+# LINKS FETCHER
 # -----------------------
 async def get_links(subject_id):
     async with MovieBoxHttpClient() as client:
@@ -95,22 +117,6 @@ async def get_links(subject_id):
                 continue
 
         return links
-
-
-@app.get("/links")
-async def links(id: str = None):
-    if not id:
-        raise HTTPException(status_code=400, detail="Missing id")
-
-    return {"data": await get_links(id)}
-
-
-# -----------------------
-# HEALTH
-# -----------------------
-@app.get("/")
-def home():
-    return {"status": "MovieBox API + TMDB mapping running"}
 
 
 # -----------------------
