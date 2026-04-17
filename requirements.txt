@@ -1,4 +1,4 @@
 fastapi
 uvicorn[standard]
 requests
-moviebox-api
+git+https://github.com/Simatwa/moviebox-api.git
